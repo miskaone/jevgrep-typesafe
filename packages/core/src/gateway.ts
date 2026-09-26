@@ -1,10 +1,22 @@
-import { createGateway, experimental_evaluate as evaluate } from "ai";
-import { type createEvaluationCache, type CacheInput } from "./cache";
+import { type createEvaluationCache, type CacheInput, type JsonValue } from "./cache";
 import { setTimeout as delay } from "node:timers/promises";
 
+const TYPESAFE_DEFAULT_BASE_URL = "https://api.typesafe.ai/v1";
+const TYPESAFE_MODEL = "jev-latest";
+
 export type EvaluationRequest = {
-  state: Parameters<typeof evaluate>[0]["state"];
+  state: JsonValue;
   questions: Record<string, { type: "boolean"; instructions: string }>;
+};
+
+type TypeSafeSystemOneRequest = {
+  model: string;
+  state: JsonValue;
+  questions: Record<string, { type: "boolean"; instructions: string }>;
+};
+
+type TypeSafeSystemOneResponse = {
+  answers: Record<string, { type: "boolean"; probability: number }>;
 };
 
 export class EvaluationFailure extends Error {
@@ -35,34 +47,65 @@ export function createEvaluator(options: {
   let cacheHits = 0;
   let cooldownUntil = 0;
   const authenticationFailure = new AbortController();
+  const typesafeBaseUrl = options.baseURL ?? TYPESAFE_DEFAULT_BASE_URL;
+
   function assertActive() {
     if (options.signal.aborted) throw new EvaluationFailure("cancelled");
     if (authenticationFailure.signal.aborted) throw new EvaluationFailure("authentication");
   }
-  const gateway = createGateway({
-    apiKey: options.apiKey,
-    baseURL: options.baseURL,
-    fetch: async (input, init) => {
-      assertActive();
-      if (requests >= (options.requestLimit ?? 50_000))
-        throw new EvaluationFailure("request-limit");
-      requests++;
-      const response = await fetch(input, init);
-      if (response.status === 429) {
-        const raw = response.headers.get("retry-after");
-        const seconds = raw === null ? NaN : Number(raw);
-        const date = raw === null ? NaN : Date.parse(raw);
-        const wait =
-          Number.isFinite(seconds) && seconds >= 0
-            ? seconds * 1000
-            : Number.isFinite(date)
-              ? Math.max(0, date - Date.now())
-              : 1000;
-        cooldownUntil = Math.max(cooldownUntil, Date.now() + wait);
-      }
-      return response;
-    },
-  });
+
+  async function callTypeSafeSystemOne(
+    request: TypeSafeSystemOneRequest,
+    signal: AbortSignal,
+  ): Promise<TypeSafeSystemOneResponse> {
+    assertActive();
+    if (requests >= (options.requestLimit ?? 50_000)) throw new EvaluationFailure("request-limit");
+    requests++;
+
+    const url = `${typesafeBaseUrl}/systemone`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${options.apiKey}`,
+      },
+      body: JSON.stringify(request),
+      signal,
+    });
+
+    if (response.status === 429) {
+      const raw = response.headers.get("retry-after");
+      const seconds = raw === null ? NaN : Number(raw);
+      const date = raw === null ? NaN : Date.parse(raw);
+      const wait =
+        Number.isFinite(seconds) && seconds >= 0
+          ? seconds * 1000
+          : Number.isFinite(date)
+            ? Math.max(0, date - Date.now())
+            : 1000;
+      cooldownUntil = Math.max(cooldownUntil, Date.now() + wait);
+      const error = new Error("Rate limited") as Error & { statusCode: number };
+      error.statusCode = 429;
+      throw error;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      const error = new Error("Authentication failed") as Error & { statusCode: number };
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    if (!response.ok) {
+      const error = new Error(`TypeSafe API error: ${response.status}`) as Error & {
+        statusCode: number;
+      };
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    return (await response.json()) as TypeSafeSystemOneResponse;
+  }
+
   return {
     get cacheHits() {
       return cacheHits;
@@ -81,8 +124,8 @@ export function createEvaluator(options: {
       const cacheInput: CacheInput = {
         request,
         namespace: {
-          model: "typesafe-ai/jev",
-          provider: options.baseURL ?? "vercel-ai-gateway",
+          model: TYPESAFE_MODEL,
+          provider: typesafeBaseUrl,
           policyVersion: options.policyVersion ?? "1",
           parserVersion: "cpython-3.11.3-pyodide-0.25.1-ts-5.9.3",
           promptVersion: "unit-locators-1",
@@ -120,16 +163,18 @@ export function createEvaluator(options: {
         await policy?.beforeAttempt?.();
         assertActive();
         try {
-          const result = await evaluate({
-            model: gateway.evaluationModel("typesafe-ai/jev"),
-            ...request,
-            maxRetries: 0,
-            abortSignal: AbortSignal.any([
+          const result = await callTypeSafeSystemOne(
+            {
+              model: TYPESAFE_MODEL,
+              state: request.state,
+              questions: request.questions,
+            },
+            AbortSignal.any([
               options.signal,
               authenticationFailure.signal,
               AbortSignal.timeout(options.timeoutMs ?? 15_000),
             ]),
-          });
+          );
           const scores = Object.fromEntries(
             Object.keys(request.questions).map((id) => {
               const answer = result.answers[id];
@@ -163,7 +208,7 @@ export function createEvaluator(options: {
             status === 408 ||
             status === 429 ||
             (typeof status === "number" && status >= 500 && status <= 599) ||
-            ["GatewayInternalServerError", "GatewayTimeoutError", "TimeoutError"].includes(name);
+            ["TimeoutError", "AbortError"].includes(name);
           if (navigation && status === 429) attemptLimit = Math.max(attemptLimit, 2);
           if ((navigation && !transient) || attempt + 1 === attemptLimit)
             throw new EvaluationFailure(

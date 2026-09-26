@@ -5,13 +5,13 @@ import { testInDocker, withCli } from "./cli";
 
 testInDocker("installed auth saves privately, bounds stdin, and never echoes keys", async () => {
   await withCli(async ({ home, run }) => {
-    const saved = await run(["auth", "--stdin"], "test-gateway-secret\n");
+    const saved = await run(["auth", "--stdin"], "test-typesafe-secret\n");
     expect(saved.code).toBe(0);
     expect(saved.stderr).toBe("");
     expect(saved.stdout).toContain("key saved");
-    expect(saved.stdout).not.toContain("test-gateway-secret");
+    expect(saved.stdout).not.toContain("test-typesafe-secret");
     const file = join(home, "jevgrep", "credentials.json");
-    expect(JSON.parse(await readFile(file, "utf8")).apiKey).toBe("test-gateway-secret");
+    expect(JSON.parse(await readFile(file, "utf8")).apiKey).toBe("test-typesafe-secret");
     expect((await stat(file)).mode & 0o777).toBe(0o600);
     expect((await stat(join(home, "jevgrep"))).mode & 0o777).toBe(0o700);
     const disabled = await run(["doctor"]);
@@ -26,6 +26,6 @@ testInDocker("installed auth saves privately, bounds stdin, and never echoes key
     expect(huge.code).toBe(1);
     expect(huge.stderr).toBe("");
     expect(huge.stdout).toContain("exceeds");
-    expect(JSON.parse(await readFile(file, "utf8")).apiKey).toBe("test-gateway-secret");
+    expect(JSON.parse(await readFile(file, "utf8")).apiKey).toBe("test-typesafe-secret");
   });
 });

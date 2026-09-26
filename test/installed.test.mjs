@@ -86,11 +86,8 @@ async function context(t, mode = "healthy", executable = binary) {
   server = createServer((request, response) => {
     void (async () => {
       assert.equal(request.method, "POST");
-      assert.equal(request.url, "/v4/ai/evaluation-model");
+      assert.equal(request.url, "/systemone");
       assert.equal(request.headers.authorization, `Bearer ${fixtureKey}`);
-      assert.equal(request.headers["ai-model-id"], "typesafe-ai/jev");
-      assert.equal(request.headers["ai-evaluation-model-specification-version"], "4");
-      assert.equal(request.headers["ai-gateway-protocol-version"], "0.0.1");
       assert.match(request.headers["content-type"] ?? "", /^application\/json/);
       const chunks = [];
       let bytes = 0;
@@ -102,7 +99,8 @@ async function context(t, mode = "healthy", executable = binary) {
       const raw = Buffer.concat(chunks).toString("utf8");
       assert.ok(!raw.includes(forbidden), "Ignored/hidden source reached the provider");
       const body = JSON.parse(raw);
-      assert.deepEqual(Object.keys(body), ["state", "questions", "providerOptions"]);
+      assert.deepEqual(Object.keys(body).sort(), ["model", "questions", "state"]);
+      assert.equal(body.model, "jev-latest");
       assert.equal(
         typeof body.state,
         "object",
@@ -209,8 +207,8 @@ async function context(t, mode = "healthy", executable = binary) {
     XDG_CONFIG_HOME: config,
     XDG_CACHE_HOME: cache,
     TMPDIR: scratch,
-    AI_GATEWAY_API_KEY: fixtureKey,
-    AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.address().port}/v4/ai`,
+    TYPESAFE_API_KEY: fixtureKey,
+    TYPESAFE_BASE_URL: `http://127.0.0.1:${server.address().port}`,
   };
   const run = async (args, overrides = {}, head = false) => {
     const result = await new Promise((resolve, reject) => {
@@ -352,7 +350,7 @@ test("installed local commands match the package without credentials", async (t)
   t.diagnostic(
     `Runtime ${process.version} ${process.platform}/${process.arch}; installed ${metadata.name}@${metadata.version}`,
   );
-  const noCredentials = { AI_GATEWAY_API_KEY: "" };
+  const noCredentials = { TYPESAFE_API_KEY: "" };
   const help = await fixture.run(["--help"], noCredentials);
   assert.equal(help.code, 0, help.stdout);
   assert.match(help.stdout, /Usage: jg /);
@@ -363,10 +361,10 @@ test("installed local commands match the package without credentials", async (t)
     await readFile(join(packageDirectory, "dist/skills/jevgrep/SKILL.md"), "utf8"),
     await readFile(expectedSkill, "utf8"),
   );
-  assert.equal(fixture.requests.length, 0, "Local commands must not contact Gateway");
+  assert.equal(fixture.requests.length, 0, "Local commands must not contact TypeSafe API");
 });
 
-test("skill command delegates installation to npx without Gateway credentials", async (t) => {
+test("skill command delegates installation to npx without TypeSafe credentials", async (t) => {
   const fixture = await context(t);
   const bin = join(fixture.tree, "installer-bin");
   await mkdir(bin);
@@ -375,7 +373,7 @@ test("skill command delegates installation to npx without Gateway credentials", 
   await symlink(new URL("./fixtures/skill-installer.mjs", import.meta.url), npx);
   const result = await fixture.run(
     ["skill", "--agent", "codex", "--agent", "claude-code", "--global", "--yes"],
-    { PATH: bin, AI_GATEWAY_API_KEY: "" },
+    { PATH: bin, TYPESAFE_API_KEY: "" },
   );
   assert.equal(result.code, 0, result.stdout);
   assert.match(result.stdout, /Installer completed/);
@@ -396,7 +394,7 @@ test("skill command delegates installation to npx without Gateway credentials", 
   assert.equal(fixture.requests.length, 0);
   const failed = await fixture.run(["skill"], {
     PATH: bin,
-    AI_GATEWAY_API_KEY: "",
+    TYPESAFE_API_KEY: "",
     JEVGREP_INSTALLER_EXIT: "7",
   });
   assert.equal(failed.code, 7, failed.stdout);
@@ -409,7 +407,7 @@ test("skill command delegates installation to npx without Gateway credentials", 
     "jevgrep",
   ]);
   await rm(npx);
-  const unavailable = await fixture.run(["skill"], { PATH: bin, AI_GATEWAY_API_KEY: "" });
+  const unavailable = await fixture.run(["skill"], { PATH: bin, TYPESAFE_API_KEY: "" });
   assert.equal(unavailable.code, 1);
   assert.match(unavailable.stdout, /requires npx/);
 });
@@ -494,12 +492,12 @@ test("warm cache reuses identical requests, no-cache bypasses reuse, and edits i
   assert.ok(!changed.stdout.includes("py-evidence-alpha:"));
   assert.ok(
     fixture.requests.slice(before).some(({ raw }) => raw.includes("edited-alpha-evidence:")),
-    "Changed source must reach Gateway instead of stale cache evidence",
+    "Changed source must reach TypeSafe API instead of stale cache evidence",
   );
   before = fixture.requests.length;
   assert.equal((await fixture.run([query, fixture.tree])).stdout, changed.stdout);
   assertCachedRequestsAreReused(fixture.requests, before);
-  const cleared = await fixture.run(["cache", "clear"], { AI_GATEWAY_API_KEY: "" });
+  const cleared = await fixture.run(["cache", "clear"], { TYPESAFE_API_KEY: "" });
   assert.equal(cleared.code, 0, cleared.stdout);
   before = fixture.requests.length;
   assert.equal((await fixture.run([query, fixture.tree])).code, 0);
@@ -512,7 +510,7 @@ test("doctor uses the installed SDK while missing credentials fail cleanly", asy
   assert.equal(doctor.code, 0, doctor.stdout);
   assert.ok(fixture.requests.length > 0);
   const before = fixture.requests.length;
-  const missing = await fixture.run([query, fixture.tree], { AI_GATEWAY_API_KEY: "" });
+  const missing = await fixture.run([query, fixture.tree], { TYPESAFE_API_KEY: "" });
   assert.equal(missing.code, 1, missing.stdout);
   assert.ok(missing.stdout.trim().length > 0);
   assert.equal(fixture.requests.length, before);
@@ -766,7 +764,7 @@ test("missing or corrupt packaged Python assets fail closed without downloads", 
       !fixture.requests.some(({ body }) => body.state.declarations),
       "Unavailable parser assets must not fabricate declaration evidence",
     );
-    assert.equal((await fixture.run(["--help"], { AI_GATEWAY_API_KEY: "" })).code, 0);
+    assert.equal((await fixture.run(["--help"], { TYPESAFE_API_KEY: "" })).code, 0);
     await rm(copy, { recursive: true, force: true });
   }
 });

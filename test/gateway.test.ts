@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createEvaluator } from "../packages/core/src/gateway";
 
-test("Jev uses native state and validated boolean probabilities through real HTTP", async () => {
+test("TypeSafe System One uses native state and validated boolean probabilities through real HTTP", async () => {
   const state = {
     query: "find event recording",
     items: [{ path: "events.ts", source: "recordEvent()" }],
@@ -9,11 +9,14 @@ test("Jev uses native state and validated boolean probabilities through real HTT
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
-      expect(await request.json()).toEqual({
-        state,
-        questions: { useful: { type: "boolean", instructions: "Is the source useful?" } },
-        providerOptions: {},
+      expect(new URL(request.url).pathname).toBe("/systemone");
+      expect(request.headers.get("authorization")).toBe("Bearer fixture");
+      const body = await request.json();
+      expect(body.state).toEqual(state);
+      expect(body.questions).toEqual({
+        useful: { type: "boolean", instructions: "Is the source useful?" },
       });
+      expect(body.model).toBe("jev-latest");
       return Response.json({ answers: { useful: { type: "boolean", probability: 0.8 } } });
     },
   });

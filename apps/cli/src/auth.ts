@@ -38,7 +38,7 @@ export async function authenticate(fromStdin: boolean, signal: AbortSignal) {
   } else {
     if (!process.stdin.isTTY) throw new CliError("Use auth --stdin to read a piped key.");
     const answer = await password({
-      message: "Paste your Vercel AI Gateway API key",
+      message: "Paste your TypeSafe API key",
       output: process.stdout,
       signal,
     });
@@ -58,14 +58,14 @@ export async function authenticate(fromStdin: boolean, signal: AbortSignal) {
   } finally {
     await rm(temporary, { force: true });
   }
-  process.stdout.write("AI Gateway key saved. Run jg doctor to verify access.\n");
+  process.stdout.write("TypeSafe API key saved. Run jg doctor to verify access.\n");
 }
 
 export async function loadApiKey(): Promise<string> {
-  const fromEnvironment = process.env.AI_GATEWAY_API_KEY;
+  const fromEnvironment = process.env.TYPESAFE_API_KEY;
   if (fromEnvironment !== undefined) {
     if (!fromEnvironment.trim())
-      throw new CliError("AI_GATEWAY_API_KEY is empty; saved credentials are disabled.");
+      throw new CliError("TYPESAFE_API_KEY is empty; saved credentials are disabled.");
     return validateKey(fromEnvironment);
   }
   try {
@@ -78,7 +78,7 @@ export async function loadApiKey(): Promise<string> {
     return validateKey(credentials.apiKey);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new CliError("Run jg auth or set AI_GATEWAY_API_KEY.");
+      throw new CliError("Run jg auth or set TYPESAFE_API_KEY.");
     }
     throw new CliError("Could not read valid credentials. Run jg auth again.");
   }

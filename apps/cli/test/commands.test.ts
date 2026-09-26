@@ -16,7 +16,7 @@ testInDocker("built commands expose usage and version without authentication", a
   const sourceHelp = Bun.spawn(
     ["bun", fileURLToPath(new URL("../src/index.ts", import.meta.url)), "--help"],
     {
-      env: { ...process.env, AI_GATEWAY_API_KEY: "" },
+      env: { ...process.env, TYPESAFE_API_KEY: "" },
       stdout: "pipe",
       stderr: "pipe",
     },

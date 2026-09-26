@@ -41,9 +41,9 @@ async function trajectory(
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
-      expect(new URL(request.url).pathname).toBe("/v4/ai/evaluation-model");
-      expect(request.headers.get("ai-model-id")).toBe("typesafe-ai/jev");
-      const body = (await request.json()) as Body;
+      expect(new URL(request.url).pathname).toBe("/systemone");
+      const body = (await request.json()) as Body & { model?: string };
+      expect(body.model).toBe("jev-latest");
       if (body.state.items || body.state.preview) requests.push(body);
       if (body.state.items && fault) {
         if (fault === "rate-limit")
@@ -91,7 +91,6 @@ async function trajectory(
           if (held.length === 2) {
             const ordered = [...held].sort((a, b) => b.path.localeCompare(a.path));
             ordered[0]!.release(ordered[0]!.response);
-            // Deliberately complete the later branch first, as an asynchronous provider can.
             setTimeout(() => ordered[1]!.release(ordered[1]!.response), 100);
           }
         });
@@ -106,8 +105,8 @@ async function trajectory(
         {
           env: {
             PATH: process.env.PATH,
-            AI_GATEWAY_API_KEY: "fixture",
-            AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
+            TYPESAFE_API_KEY: "fixture",
+            TYPESAFE_BASE_URL: `http://127.0.0.1:${server.port}`,
           },
           stdout: "pipe",
           stderr: "pipe",
@@ -127,7 +126,7 @@ async function trajectory(
         { root, query, signal },
         createEvaluator({
           apiKey: "fixture",
-          baseURL: `http://127.0.0.1:${server.port}/v4/ai`,
+          baseURL: `http://127.0.0.1:${server.port}`,
           signal,
         }),
       );

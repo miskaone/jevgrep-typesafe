@@ -20,7 +20,7 @@ testInDocker(
     const env = {
       ...process.env,
       HOME: scratch,
-      AI_GATEWAY_API_KEY: "",
+      TYPESAFE_API_KEY: "",
       NODE_PATH: "",
       npm_config_cache: npmCache,
     };

@@ -77,8 +77,8 @@ async function run(root: string, production: boolean) {
       {
         env: {
           PATH: process.env.PATH,
-          AI_GATEWAY_API_KEY: "fixture",
-          AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
+          TYPESAFE_API_KEY: "fixture",
+          TYPESAFE_BASE_URL: `http://127.0.0.1:${server.port}`,
         },
         stdout: "pipe",
         stderr: "pipe",
