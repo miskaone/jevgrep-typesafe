@@ -66,7 +66,7 @@ async function trajectory(
         answers: Object.fromEntries(
           Object.keys(body.questions).map((id, i) => {
             const item = body.state.items?.[i];
-            const probability =
+            const noul =
               item?.kind === "directory"
                 ? body.state.relationAnchor &&
                   item.path.split("/").some((segment) => segment.startsWith("related")) &&
@@ -77,7 +77,7 @@ async function trajectory(
                 : item?.path.startsWith("Anchor.")
                   ? 0.9
                   : 0.25;
-            return [id, { type: "boolean", probability }];
+            return [id, { type: "noul", noul }];
           }),
         ),
       });

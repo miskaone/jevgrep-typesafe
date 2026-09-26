@@ -51,7 +51,7 @@ async function run(root: string, production: boolean) {
       }
       return Response.json({
         answers: Object.fromEntries(
-          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+          Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
         ),
       });
     },

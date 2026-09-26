@@ -53,8 +53,8 @@ for (const [name, source] of [
               Object.keys(body.questions).map((id, index) => [
                 id,
                 {
-                  type: "boolean",
-                  probability:
+                  type: "noul",
+                  noul:
                     name === "CR-only method selected" &&
                     body.state?.declarations?.[index]?.name.endsWith(".context")
                       ? 0.1

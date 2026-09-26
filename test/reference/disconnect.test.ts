@@ -18,7 +18,7 @@ async function disconnected(reference: boolean) {
     response.end(
       JSON.stringify({
         answers: Object.fromEntries(
-          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.05 }]),
+          Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.05 }]),
         ),
       }),
     );

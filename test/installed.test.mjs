@@ -109,8 +109,8 @@ async function context(t, mode = "healthy", executable = binary) {
       assert.ok(body.state !== null && !Array.isArray(body.state));
       assert.ok(Object.keys(body.questions).length > 0);
       for (const question of Object.values(body.questions)) {
-        assert.equal(question.type, "boolean");
-        assert.ok(typeof question.instructions === "string" && question.instructions.length > 0);
+        assert.equal(question.type, "noul");
+        assert.ok(typeof question.criteria === "string" && question.criteria.length > 0);
       }
       assert.ok(requests.length < 256, "Synthetic search stopped making bounded forward progress");
       requests.push({ body, raw, receivedAt: performance.now() });
@@ -185,7 +185,7 @@ async function context(t, mode = "healthy", executable = binary) {
       response.end(
         JSON.stringify({
           answers: Object.fromEntries(
-            ids.map((id, index) => [id, { type: "boolean", probability: probabilities[index] }]),
+            ids.map((id, index) => [id, { type: "noul", noul: probabilities[index] }]),
           ),
           usage: { inputTokens: 1, outputTokens: 1 },
           warnings: [{ type: "other", message: "installed-fixture-warning" }],
@@ -784,7 +784,7 @@ for (const mutation of ["changed", "ignored"])
       response.end(
         JSON.stringify({
           answers: Object.fromEntries(
-            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+            Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
           ),
         }),
       );
@@ -824,7 +824,7 @@ test("installed queued freshness withholds excluded source uploads", async (t) =
     response.end(
       JSON.stringify({
         answers: Object.fromEntries(
-          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.1 }]),
+          Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.1 }]),
         ),
       }),
     );

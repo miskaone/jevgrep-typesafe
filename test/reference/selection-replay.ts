@@ -65,7 +65,7 @@ export async function replaySelection(
         answers: Object.fromEntries(
           input.declarations.map((declaration, index) => [
             `q${index}`,
-            { type: "boolean", probability: score(declaration, input.selectedEvidence ? 1 : 0) },
+            { type: "noul", noul: score(declaration, input.selectedEvidence ? 1 : 0) },
           ]),
         ),
       };

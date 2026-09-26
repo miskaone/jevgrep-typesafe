@@ -9,15 +9,27 @@ export type EvaluationRequest = {
   questions: Record<string, { type: "boolean"; instructions: string }>;
 };
 
+type TypeSafeNoulQuestion = {
+  type: "noul";
+  criteria: string;
+};
+
 type TypeSafeSystemOneRequest = {
   model: string;
   state: JsonValue;
-  questions: Record<string, { type: "boolean"; instructions: string }>;
+  questions: Record<string, TypeSafeNoulQuestion>;
 };
 
 type TypeSafeSystemOneResponse = {
-  answers: Record<string, { type: "boolean"; probability: number }>;
+  answers: Record<string, { type: "noul"; noul: number }>;
 };
+
+function convertToNoulQuestion(question: { type: "boolean"; instructions: string }): TypeSafeNoulQuestion {
+  return {
+    type: "noul",
+    criteria: `yes: ${question.instructions}\nno: Does not match the criteria.`,
+  };
+}
 
 export class EvaluationFailure extends Error {
   constructor(
@@ -163,11 +175,17 @@ export function createEvaluator(options: {
         await policy?.beforeAttempt?.();
         assertActive();
         try {
+          const noulQuestions = Object.fromEntries(
+            Object.entries(request.questions).map(([id, question]) => [
+              id,
+              convertToNoulQuestion(question),
+            ]),
+          );
           const result = await callTypeSafeSystemOne(
             {
               model: TYPESAFE_MODEL,
               state: request.state,
-              questions: request.questions,
+              questions: noulQuestions,
             },
             AbortSignal.any([
               options.signal,
@@ -180,13 +198,13 @@ export function createEvaluator(options: {
               const answer = result.answers[id];
               if (
                 !answer ||
-                answer.type !== "boolean" ||
-                !Number.isFinite(answer.probability) ||
-                answer.probability < 0 ||
-                answer.probability > 1
+                answer.type !== "noul" ||
+                !Number.isFinite(answer.noul) ||
+                answer.noul < 0 ||
+                answer.noul > 1
               )
                 throw new Error("Invalid answer");
-              return [id, answer.probability];
+              return [id, answer.noul];
             }),
           );
           await options.cache?.put(cacheInput, scores);

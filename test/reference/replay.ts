@@ -19,15 +19,19 @@ export async function replay(
           selectedEvidence?: unknown[];
           relationAnchor?: unknown;
         };
-        questions: Record<string, unknown>;
+        questions: Record<string, { type: string; criteria?: string }>;
       };
       expect(body.model).toBe("jev-latest");
+      for (const question of Object.values(body.questions)) {
+        expect(question.type).toBe("noul");
+        expect(question.criteria).toBeDefined();
+      }
       requests.push(body);
       if (mode === "missing") return Response.json({ answers: {} });
       if (mode === "invalid")
         return Response.json({
           answers: Object.fromEntries(
-            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 2 }]),
+            Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 2 }]),
           ),
         });
       return Response.json({
@@ -35,8 +39,8 @@ export async function replay(
           Object.keys(body.questions).map((id, i) => [
             id,
             {
-              type: "boolean",
-              probability:
+              type: "noul",
+              noul:
                 body.state.items?.[i]?.path === "unrelated.md"
                   ? 0.05
                   : body.state.items?.[i]?.path === "src/backend" && !body.state.relationAnchor

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createEvaluator } from "../packages/core/src/gateway";
 
-test("TypeSafe System One uses native state and validated boolean probabilities through real HTTP", async () => {
+test("TypeSafe System One uses noul questions and validated scores through real HTTP", async () => {
   const state = {
     query: "find event recording",
     items: [{ path: "events.ts", source: "recordEvent()" }],
@@ -13,11 +13,10 @@ test("TypeSafe System One uses native state and validated boolean probabilities 
       expect(request.headers.get("authorization")).toBe("Bearer fixture");
       const body = await request.json();
       expect(body.state).toEqual(state);
-      expect(body.questions).toEqual({
-        useful: { type: "boolean", instructions: "Is the source useful?" },
-      });
       expect(body.model).toBe("jev-latest");
-      return Response.json({ answers: { useful: { type: "boolean", probability: 0.8 } } });
+      expect(body.questions.useful.type).toBe("noul");
+      expect(body.questions.useful.criteria).toContain("Is the source useful?");
+      return Response.json({ answers: { useful: { type: "noul", noul: 0.8 } } });
     },
   });
   try {
@@ -45,7 +44,7 @@ test("transient failures retry within the shared request guard and never become 
       calls++;
       return calls === 1
         ? Response.json({ error: "retry" }, { status: 503 })
-        : Response.json({ answers: { q: { type: "boolean", probability: 0.2 } } });
+        : Response.json({ answers: { q: { type: "noul", noul: 0.2 } } });
     },
   });
   try {
@@ -118,7 +117,7 @@ test("Retry-After delays a retry before the provider can recover", async () => {
             { error: "rate limited" },
             { status: 429, headers: { "retry-after": "0.1" } },
           )
-        : Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+        : Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
     },
   });
   try {
@@ -178,7 +177,7 @@ test("authentication failure stops other in-flight and subsequent query requests
       calls++;
       if (calls === 1) return new Promise<Response>(() => {});
       if (calls === 2) return Response.json({ error: "unauthorized" }, { status: 401 });
-      return Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+      return Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
     },
   });
   try {

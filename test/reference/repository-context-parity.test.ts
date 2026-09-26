@@ -32,8 +32,8 @@ async function run(
           Object.keys(body.questions).map((id, i) => [
             id,
             {
-              type: "boolean",
-              probability: body.state.items
+              type: "noul",
+              noul: body.state.items
                 ? largeAnchor
                   ? body.state.items[i]?.kind === "directory"
                     ? body.state.relationAnchor

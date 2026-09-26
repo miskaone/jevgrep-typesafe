@@ -26,8 +26,8 @@ testIfDocker(
             Object.keys(body.questions).map((id, index) => [
               id,
               {
-                type: "boolean",
-                probability: body.state.declarations
+                type: "noul",
+                noul: body.state.declarations
                   ? !body.state.selectedEvidence && body.state.declarations[index]?.startLine === 1
                     ? 0.9
                     : 0
