@@ -1,18 +1,20 @@
 ![jevgrep — Find the context. Start coding.](assets/cover.png)
 
-# jevgrep
+# jevgrep (TypeSafe Fork)
 
 [![npm](https://img.shields.io/npm/v/@dzhng/jevgrep?style=flat-square&color=ef5638)](https://www.npmjs.com/package/@dzhng/jevgrep)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square)](apps/cli/README.md)
-[![Release](https://img.shields.io/github/actions/workflow/status/dzhng/jevgrep/publish.yml?style=flat-square&label=release)](https://github.com/dzhng/jevgrep/actions/workflows/publish.yml)
 
 **Find code by asking what it does.**
+
+This is a fork of [dzhng/jevgrep](https://github.com/dzhng/jevgrep) that uses
+TypeSafe AI's System One API directly instead of Vercel AI Gateway.
 
 Coding agents spend part of every unfamiliar task finding the right files.
 Jevgrep gives them a place to start: ask a repository question, and `jg` returns
 relevant files, reading leads, and verbatim source excerpts in one stdout response.
-It uses [Jev](https://vercel.com/ai-gateway/models/jev) to judge relevance across
+It uses [Jev](https://docs.typesafe.ai/models) to judge relevance across
 folders, files, and declarations. Your coding agent then implements and tests the change.
 
 ```sh
@@ -22,7 +24,7 @@ jg skill
 jg "How are telemetry events recorded and sent?" ./my-project
 ```
 
-Requires **Node.js 22+**, **macOS or Linux**, and a **Vercel AI Gateway key**.
+Requires **Node.js 22+**, **macOS or Linux**, and a **TypeSafe API key**.
 No separate Python, Bun, or ripgrep installation is required to use `jg`.
 
 ## Install the agent skill — required for agent setup
@@ -41,7 +43,7 @@ others) and asks where to install. Add `--global` for a user-wide install, or
 returned context, and when to fill gaps with its normal tools. It skips redundant
 retrieval when the needed context is already known. The current repository skill
 checks for `jg` and installs the CLI if it is missing; authentication still needs
-your Gateway key. The skill installer itself does not configure credentials.
+your TypeSafe API key. The skill installer itself does not configure credentials.
 
 `jg skill` delegates to the [skills CLI](https://github.com/vercel-labs/skills)
 and needs npm/npx plus network access. You can also run that installer directly,
@@ -112,12 +114,12 @@ include exact costs, failed tasks, and separately observed Jev charges. See the
 
 ## Source, credentials, and local state
 
-Searches send eligible source content to Jev through Vercel AI Gateway. Default
+Searches send eligible source content to TypeSafe AI's System One API. Default
 filesystem filtering respects ignore files and excludes hidden, dependency/build,
 binary, and obvious credential files. These filters are not a guarantee that all
 sensitive information has been removed; choose a search root you intend to send.
 
-`jg auth` saves your key in an owner-only config file. `AI_GATEWAY_API_KEY` takes
+`jg auth` saves your key in an owner-only config file. `TYPESAFE_API_KEY` takes
 precedence when set; `jg doctor` checks the connection with synthetic input.
 Evaluation answers are cached locally by default. The CLI writes its output to
 stdout and does not create report files. Use `jg --help` for cache controls,

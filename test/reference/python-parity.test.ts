@@ -53,8 +53,8 @@ for (const [name, source] of [
               Object.keys(body.questions).map((id, index) => [
                 id,
                 {
-                  type: "boolean",
-                  probability:
+                  type: "noul",
+                  noul:
                     name === "CR-only method selected" &&
                     body.state?.declarations?.[index]?.name.endsWith(".context")
                       ? 0.1
@@ -82,8 +82,8 @@ for (const [name, source] of [
             {
               env: {
                 PATH: process.env.PATH,
-                AI_GATEWAY_API_KEY: "fixture",
-                AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
+                TYPESAFE_API_KEY: "fixture",
+                TYPESAFE_BASE_URL: `http://127.0.0.1:${server.port}`,
               },
               stdout: "pipe",
               stderr: "pipe",

@@ -30,7 +30,7 @@ finally:
 `,
         cli,
       ],
-      { env: { ...process.env, HOME: home, AI_GATEWAY_API_KEY: "" } },
+      { env: { ...process.env, HOME: home, TYPESAFE_API_KEY: "" } },
     );
     expect(JSON.parse(stdout)).toEqual({ code: 0, stderr: "" });
   });
@@ -79,7 +79,7 @@ finally:
           cli,
           mode,
         ],
-        { env: { ...process.env, HOME: home, XDG_CONFIG_HOME: home, AI_GATEWAY_API_KEY: "" } },
+        { env: { ...process.env, HOME: home, XDG_CONFIG_HOME: home, TYPESAFE_API_KEY: "" } },
       );
       const result = JSON.parse(stdout);
       expect(result.code).toBe(mode === "save" ? 0 : 130);

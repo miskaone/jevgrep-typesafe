@@ -1,8 +1,10 @@
-# Jevgrep (`jg`)
+# Jevgrep (`jg`) — TypeSafe Fork
 
 Ask a repository question and get relevant file locations plus verbatim source
 excerpts. Jevgrep helps a coding agent begin unfamiliar multi-file work with
 useful context; the agent still owns implementation and verification.
+
+This fork uses TypeSafe AI's System One API directly instead of Vercel AI Gateway.
 
 Requires Node.js 22 or newer on macOS or Linux. Install and authenticate:
 
@@ -13,9 +15,9 @@ jg doctor
 jg "How are telemetry events recorded and sent?" ./my-project
 ```
 
-`auth` saves your Vercel AI Gateway key; `doctor` verifies it with synthetic input.
-You can instead supply `AI_GATEWAY_API_KEY`. Searches send eligible source to Jev
-through AI Gateway. Credentials use an owner-only config file. Evaluation answers
+`auth` saves your TypeSafe API key; `doctor` verifies it with synthetic input.
+You can instead supply `TYPESAFE_API_KEY`. Searches send eligible source to Jev
+through TypeSafe's API. Credentials use an owner-only config file. Evaluation answers
 are cached locally; `jg --help` describes overrides and cache commands.
 
 The summary comes first, followed by file and declaration locations and selected

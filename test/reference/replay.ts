@@ -8,10 +8,10 @@ export async function replay(
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
-      expect(new URL(request.url).pathname).toBe("/v4/ai/evaluation-model");
-      expect(request.headers.get("ai-model-id")).toBe("typesafe-ai/jev");
+      expect(new URL(request.url).pathname).toBe("/systemone");
       expect(request.headers.get("authorization")).toBe("Bearer reference-fixture");
       const body = (await request.json()) as {
+        model: string;
         state: {
           items?: Array<{ path: string }>;
           path?: string;
@@ -19,14 +19,21 @@ export async function replay(
           selectedEvidence?: unknown[];
           relationAnchor?: unknown;
         };
-        questions: Record<string, unknown>;
+        questions: Record<string, { type: string; instructions?: string; criteria?: { yes: string; no: string } }>;
       };
+      expect(body.model).toBe("jev-latest");
+      for (const question of Object.values(body.questions)) {
+        expect(question.type).toBe("noul");
+        expect(question.instructions).toBeDefined();
+        expect(question.criteria).toBeDefined();
+        expect(typeof question.criteria).toBe("object");
+      }
       requests.push(body);
       if (mode === "missing") return Response.json({ answers: {} });
       if (mode === "invalid")
         return Response.json({
           answers: Object.fromEntries(
-            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 2 }]),
+            Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 2 }]),
           ),
         });
       return Response.json({
@@ -34,8 +41,8 @@ export async function replay(
           Object.keys(body.questions).map((id, i) => [
             id,
             {
-              type: "boolean",
-              probability:
+              type: "noul",
+              noul:
                 body.state.items?.[i]?.path === "unrelated.md"
                   ? 0.05
                   : body.state.items?.[i]?.path === "src/backend" && !body.state.relationAnchor
@@ -73,8 +80,8 @@ export async function replay(
       {
         env: {
           PATH: process.env.PATH,
-          AI_GATEWAY_API_KEY: "reference-fixture",
-          AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
+          TYPESAFE_API_KEY: "reference-fixture",
+          TYPESAFE_BASE_URL: `http://127.0.0.1:${server.port}`,
         },
         stdout: "pipe",
         stderr: "pipe",

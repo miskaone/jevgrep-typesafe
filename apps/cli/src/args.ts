@@ -109,8 +109,8 @@ Usage: jg "question" [root]
 Root defaults to the current directory; use -- before a root beginning with -.
 
 Commands:
-  auth [--stdin]   Save a Gateway key (hidden prompt, or an explicit pipe)
-  doctor          Verify Jev access using a synthetic question
+  auth [--stdin]   Save a TypeSafe API key (hidden prompt, or an explicit pipe)
+  doctor          Verify TypeSafe connection using a synthetic question
   skill           Install the agent skill via npx skills
   --help, -h      Show usage
   --version       Show the installed version

@@ -18,7 +18,7 @@ async function disconnected(reference: boolean) {
     response.end(
       JSON.stringify({
         answers: Object.fromEntries(
-          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.05 }]),
+          Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.05 }]),
         ),
       }),
     );
@@ -36,8 +36,8 @@ async function disconnected(reference: boolean) {
       {
         env: {
           PATH: process.env.PATH,
-          AI_GATEWAY_API_KEY: "fixture",
-          AI_GATEWAY_BASE_URL: `http://127.0.0.1:${address.port}/v4/ai`,
+          TYPESAFE_API_KEY: "fixture",
+          TYPESAFE_BASE_URL: `http://127.0.0.1:${address.port}`,
         },
         stdout: "pipe",
         stderr: "pipe",

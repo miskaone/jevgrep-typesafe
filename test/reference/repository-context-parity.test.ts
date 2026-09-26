@@ -14,8 +14,9 @@ async function run(
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
-      expect(new URL(request.url).pathname).toBe("/v4/ai/evaluation-model");
+      expect(new URL(request.url).pathname).toBe("/systemone");
       const body = (await request.json()) as {
+        model?: string;
         state: {
           items?: Array<{ path: string; kind: string }>;
           relationAnchor?: unknown;
@@ -24,14 +25,15 @@ async function run(
         };
         questions: Record<string, unknown>;
       };
+      expect(body.model).toBe("jev-latest");
       requests.push(body);
       return Response.json({
         answers: Object.fromEntries(
           Object.keys(body.questions).map((id, i) => [
             id,
             {
-              type: "boolean",
-              probability: body.state.items
+              type: "noul",
+              noul: body.state.items
                 ? largeAnchor
                   ? body.state.items[i]?.kind === "directory"
                     ? body.state.relationAnchor
@@ -64,8 +66,8 @@ async function run(
       {
         env: {
           PATH: process.env.PATH,
-          AI_GATEWAY_API_KEY: "fixture",
-          AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
+          TYPESAFE_API_KEY: "fixture",
+          TYPESAFE_BASE_URL: `http://127.0.0.1:${server.port}`,
         },
         stdout: "pipe",
         stderr: "pipe",

@@ -8,7 +8,6 @@ import { join } from "node:path";
 import { version } from "../package.json";
 import { installSkill } from "./skill";
 
-globalThis.AI_SDK_LOG_WARNINGS = false;
 
 const controller = new AbortController();
 let pipeClosed = false;
@@ -61,7 +60,7 @@ async function main() {
       const evaluator = createEvaluator({
         apiKey,
         signal: controller.signal,
-        baseURL: process.env.AI_GATEWAY_BASE_URL,
+        baseURL: process.env.TYPESAFE_BASE_URL,
       });
       try {
         const answers = await evaluator.evaluate({
@@ -75,11 +74,11 @@ async function main() {
         });
         if (!(answers.relevant! > 0.5))
           throw new CliError("Jev returned an unexpected answer to the connection check.");
-        await write("Jev connection verified.\n");
+        await write("TypeSafe connection verified.\n");
       } catch (error) {
         if (error instanceof CliError) throw error;
         throw new CliError(
-          "Jev connection check failed. Check your Gateway key, model access, and network.",
+          "TypeSafe connection check failed. Check your API key, model access, and network.",
         );
       }
       return;
@@ -96,7 +95,7 @@ async function main() {
         policyVersion: JSON.stringify(command.policy),
         apiKey,
         signal: controller.signal,
-        baseURL: process.env.AI_GATEWAY_BASE_URL,
+        baseURL: process.env.TYPESAFE_BASE_URL,
       });
       const result = await retrieve(
         {
