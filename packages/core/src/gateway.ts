@@ -11,7 +11,8 @@ export type EvaluationRequest = {
 
 type TypeSafeNoulQuestion = {
   type: "noul";
-  criteria: string;
+  instructions: string;
+  criteria: { yes: string; no: string };
 };
 
 type TypeSafeSystemOneRequest = {
@@ -27,7 +28,11 @@ type TypeSafeSystemOneResponse = {
 function convertToNoulQuestion(question: { type: "boolean"; instructions: string }): TypeSafeNoulQuestion {
   return {
     type: "noul",
-    criteria: `yes: ${question.instructions}\nno: Does not match the criteria.`,
+    instructions: question.instructions,
+    criteria: {
+      yes: question.instructions,
+      no: "Does not match the criteria.",
+    },
   };
 }
 

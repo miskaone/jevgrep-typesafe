@@ -110,7 +110,10 @@ async function context(t, mode = "healthy", executable = binary) {
       assert.ok(Object.keys(body.questions).length > 0);
       for (const question of Object.values(body.questions)) {
         assert.equal(question.type, "noul");
-        assert.ok(typeof question.criteria === "string" && question.criteria.length > 0);
+        assert.ok(typeof question.instructions === "string" && question.instructions.length > 0);
+        assert.ok(typeof question.criteria === "object" && question.criteria !== null);
+        assert.ok(typeof question.criteria.yes === "string" && question.criteria.yes.length > 0);
+        assert.ok(typeof question.criteria.no === "string" && question.criteria.no.length > 0);
       }
       assert.ok(requests.length < 256, "Synthetic search stopped making bounded forward progress");
       requests.push({ body, raw, receivedAt: performance.now() });

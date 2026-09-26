@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createEvaluator } from "../packages/core/src/gateway";
 
-test("TypeSafe System One uses noul questions and validated scores through real HTTP", async () => {
+test("TypeSafe System One uses noul questions with object criteria and validated scores", async () => {
   const state = {
     query: "find event recording",
     items: [{ path: "events.ts", source: "recordEvent()" }],
@@ -15,7 +15,11 @@ test("TypeSafe System One uses noul questions and validated scores through real 
       expect(body.state).toEqual(state);
       expect(body.model).toBe("jev-latest");
       expect(body.questions.useful.type).toBe("noul");
-      expect(body.questions.useful.criteria).toContain("Is the source useful?");
+      expect(body.questions.useful.instructions).toBe("Is the source useful?");
+      expect(body.questions.useful.criteria).toEqual({
+        yes: "Is the source useful?",
+        no: "Does not match the criteria.",
+      });
       return Response.json({ answers: { useful: { type: "noul", noul: 0.8 } } });
     },
   });

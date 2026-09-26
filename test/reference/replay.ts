@@ -19,12 +19,14 @@ export async function replay(
           selectedEvidence?: unknown[];
           relationAnchor?: unknown;
         };
-        questions: Record<string, { type: string; criteria?: string }>;
+        questions: Record<string, { type: string; instructions?: string; criteria?: { yes: string; no: string } }>;
       };
       expect(body.model).toBe("jev-latest");
       for (const question of Object.values(body.questions)) {
         expect(question.type).toBe("noul");
+        expect(question.instructions).toBeDefined();
         expect(question.criteria).toBeDefined();
+        expect(typeof question.criteria).toBe("object");
       }
       requests.push(body);
       if (mode === "missing") return Response.json({ answers: {} });
